@@ -3,6 +3,7 @@ import Band from 'rarwe/models/band';
 import Song from 'rarwe/models/song';
 import { tracked } from 'tracked-built-ins';
 import { isArray } from '@ember/array';
+import ENV from 'rarwe/config/environment';
 
 function extractRelationships(object) {
   let relationships = {};
@@ -21,15 +22,23 @@ export default class CatalogService extends Service {
     this.storage.songs = tracked([]);
   }
 
+  get bandsURL() {
+    return `${ENV.apiHost || ''}/bands`;
+  }
+
+  get songsURL() {
+    return `${ENV.apiHost || ''}/songs`;
+  }
+
   async fetchAll(type) {
     if (type === 'bands') {
-      let response = await fetch('/bands');
+      let response = await fetch(this.bandsURL);
       let json = await response.json();
       this.loadAll(json);
       return this.bands;
     }
     if (type === 'songs') {
-      let response = await fetch('/songs');
+      let response = await fetch(this.songsURL);
       let json = await response.json();
       this.loadAll(json);
       return this.songs;
@@ -84,7 +93,7 @@ export default class CatalogService extends Service {
         relationships
       }
     };
-    let response = await fetch(type === 'band' ? '/bands' : '/songs', {
+    let response = await fetch(type === 'band' ? this.bandsURL : this.songsURL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/vnd.api+json'
@@ -104,7 +113,7 @@ export default class CatalogService extends Service {
         attributes
       }
     };
-    let url = type === 'band' ? `/bands/${record.id}` : `/songs/${record.id}`;
+    let url = type === 'band' ? `${this.bandsURL}/${record.id}` : `${this.songsURL}/${record.id}`;
     await fetch(url, {
       method: 'PATCH',
       headers: {
